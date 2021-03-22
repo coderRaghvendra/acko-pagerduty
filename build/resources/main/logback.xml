@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="30 seconds">
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        Log message format
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender> 
+   <property name="np.log_path" value="log"/>
+    <!-- Ned appender to write to file -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- Name of the file where the log messages are written -->
+        <file>${np.log_path}/backend.log</file>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>%date [%thread][%X{uid}][%X{deviceId}][%X{appId}][%X{appVersion}] %level [%file:%line] %msg%n</Pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${np.log_path}/backend.log.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+            <maxHistory>90</maxHistory>
+             <!-- total size of all archive files, if total size > 20GB, 
+				it will delete old archived file -->
+            <totalSizeCap>50GB</totalSizeCap>            
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+    </appender>
+    <appender name="ASYNC_FILE" queueSize="10000" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="FILE" />
+        <includeCallerData>true</includeCallerData>
+    </appender>
+
+	<!-- External API AUDIT Logger -->
+	<appender name="API_AUDIT_LOG"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<!-- for pipe seperated string log -->
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder"> 
+			<Pattern>%msg%n</Pattern>
+	    </encoder>
+	    <!-- encoder for Json log -->
+		<!-- <encoder
+			class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+			<layout class="ch.qos.logback.contrib.json.classic.JsonLayout">
+				<timestampFormat>yyyy-MM-dd'T'HH:mm:ss.SSSX</timestampFormat>
+				<timestampFormatTimezoneId>Etc/UTC</timestampFormatTimezoneId>
+				<jsonFormatter
+					class="ch.qos.logback.contrib.jackson.JacksonJsonFormatter">
+					<prettyPrint>true</prettyPrint>
+				</jsonFormatter>
+			</layout>
+		</encoder> -->
+		<file>${np.log_path}/api/audit.log</file>
+		<rollingPolicy
+			class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${np.log_path}/api/audit.log.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>			
+			<maxHistory>90</maxHistory>
+            <totalSizeCap>50GB</totalSizeCap>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+		</rollingPolicy>
+	</appender>
+
+    <appender name="ASYNC_API_AUDIT_LOG" queueSize="10000" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="API_AUDIT_LOG" />
+        <includeCallerData>true</includeCallerData>
+    </appender>
+
+    <logger name="externalAPIAuditLogger" level="info" additivity="false">
+        <appender-ref ref="ASYNC_API_AUDIT_LOG" />
+    </logger>
+     
+    <!-- Setting the root level of logging to INFO -->
+    <root level="info">
+        <appender-ref ref="ASYNC_FILE" />        
+    </root>
+</configuration>
